@@ -1,4 +1,5 @@
 import mongoose from '@/database';
+import Slugify from '@/utils/Slugify';
 
 const CoasterSchema = new mongoose.Schema({
   coasterName: {
@@ -8,7 +9,6 @@ const CoasterSchema = new mongoose.Schema({
   },
   slug: {
     type: String,
-    required: true,
     unique: true,
   },
   description: {
@@ -45,6 +45,12 @@ const CoasterSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+});
+
+CoasterSchema.pre('save', function (next) {
+  const coName = this.coasterName;
+  this.slug = Slugify(coName);
+  next();
 });
 
 export default mongoose.model('Coaster', CoasterSchema);
