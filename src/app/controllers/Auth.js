@@ -4,6 +4,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "@/app/schemas/User";
 import authConfig from "@/config/Auth";
+import Mailer from "@/modules/Mailer";
 
 const router = new Router();
 
@@ -76,7 +77,65 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.post("/forgot-password", (req, res) => {});
+router.post("/forgot-password", (req, res) => {
+  const { email } = req.body;
+
+  User.findOne({ email })
+    .then((user) => {
+      if (user) {
+        const token = crypto.randomBytes(20).toString("hex");
+        const expiration = new Date();
+        expiration.setHours(new Date().getHours + 3);
+
+        User.findByIdAndUpdate(user.id, {
+          $set: {
+            pswdResetToken: token,
+            pswdResetTokenExpitarion: expiration,
+          },
+        })
+          .then(() => {
+            Mailer.sendMail(
+              {
+                to: email,
+                from: "rctmanger@help.you",
+                template: "auth/forgot_password",
+                context: { token },
+              },
+              (error) => {
+                if (error) {
+                  console.error(
+                    "ERRO - O envio do e-mail de recuperação foi malsucedido.",
+                    error
+                  );
+                  return res.status(400).send({
+                    error: "Não foi possível enviar o e-mail de recuperação.",
+                  });
+                } else {
+                  return res.send();
+                }
+              }
+            );
+          })
+          .catch((error) => {
+            console.error(
+              "ERRO - Armazenamento do token de recuperação malsucedido.",
+              error
+            );
+            return res.status(500).send({
+              error: "Erro do servidor interno.",
+            });
+          });
+      } else {
+        return res.send("Usuário não encontrado.");
+      }
+    })
+    .catch((error) => {
+      console.error("ERRO - Operação de recuperar senha malsucedida.", error);
+      return res.status(500).send({
+        error: "Erro do servidor interno.",
+      });
+    });
+});
 
 router.post("/reset-password", (req, res) => {});
 

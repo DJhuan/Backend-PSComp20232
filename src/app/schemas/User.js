@@ -17,6 +17,14 @@ const UserSchema = new mongoose.Schema({
     required: true,
     select: false,
   },
+  pswdResettoken: {
+    type: String,
+    select: false,
+  },
+  pswdResettokenExpitarion: {
+    type: Date,
+    select: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
