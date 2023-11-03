@@ -17,11 +17,11 @@ const UserSchema = new mongoose.Schema({
     required: true,
     select: false,
   },
-  pswdResettoken: {
+  pswdResetToken: {
     type: String,
     select: false,
   },
-  pswdResettokenExpitarion: {
+  pswdResetTokenExpiration: {
     type: Date,
     select: false,
   },

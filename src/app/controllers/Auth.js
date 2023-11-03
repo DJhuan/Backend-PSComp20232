@@ -85,14 +85,18 @@ router.post("/forgot-password", (req, res) => {
       if (user) {
         const token = crypto.randomBytes(20).toString("hex");
         const expiration = new Date();
-        expiration.setHours(new Date().getHours + 3);
+        expiration.setHours(new Date().getHours() + 3);
 
-        User.findByIdAndUpdate(user.id, {
-          $set: {
-            pswdResetToken: token,
-            pswdResetTokenExpitarion: expiration,
+        User.findByIdAndUpdate(
+          user.id,
+          {
+            $set: {
+              pswdResetToken: token,
+              pswdResetTokenExpiration: expiration,
+            },
           },
-        })
+          { new: true }
+        )
           .then(() => {
             Mailer.sendMail(
               {
@@ -137,6 +141,49 @@ router.post("/forgot-password", (req, res) => {
     });
 });
 
-router.post("/reset-password", (req, res) => {});
+router.post("/reset-password", (req, res) => {
+  const { email, token, newPassword } = req.body;
+
+  User.findOne({ email })
+    .select("+pswdResetToken pswdResetTokenExpiration")
+    .then((user) => {
+      if (user) {
+        if (token != user.pswdResetToken) {
+          return res.status(400).send({ error: "Token inválido!" });
+        } else if (Date.now() > user.pswdResetTokenExpitarion) {
+          return res
+            .status(400)
+            .send({ error: "Período de validade do token vancido!" });
+        } else {
+          user.pswdResetToken = undefined;
+          user.pswdResetTokenExpitarion = undefined;
+          user.password = newPassword;
+
+          user
+            .save()
+            .then(() => {
+              return res.send({ info: "A senha foi alterada com sucesso!" });
+            })
+            .catch((error) => {
+              console.error(
+                "ERRO - Armazenamento de nova senha malsucedido.",
+                error
+              );
+              return res.status(500).send({
+                error: "Erro do servidor interno.",
+              });
+            });
+        }
+      } else {
+        return res.send("Usuário não encontrado!");
+      }
+    })
+    .catch((error) => {
+      console.error("ERRO - Operação de redefinir senha malsucedida.", error);
+      return res.status(500).send({
+        error: "Erro do servidor interno.",
+      });
+    });
+});
 
 export default router;
