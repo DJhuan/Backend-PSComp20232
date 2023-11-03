@@ -1,3 +1,4 @@
-import CoasterManager from './CoasterManager';
+import CoasterManager from "./CoasterManager";
+import Auth from "./Auth";
 
-export { CoasterManager };
+export { CoasterManager, Auth };
