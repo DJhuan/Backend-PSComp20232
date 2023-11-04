@@ -1,6 +1,7 @@
 import { Router } from "express";
 import CoasterSchema from "@/app/schemas/Coaster";
 import Slugify from "@/utils/Slugify";
+import AuthMiddleware from "@/app/middlewares/Auth";
 
 const router = new Router();
 
@@ -54,7 +55,7 @@ router.get("/:coasterSlug", (req, res) => {
     });
 });
 
-router.post("/", (req, res) => {
+router.post("/", AuthMiddleware, (req, res) => {
   const {
     coasterName,
     slug,
@@ -94,7 +95,7 @@ router.post("/", (req, res) => {
     });
 });
 
-router.put("/:coasterId", (req, res) => {
+router.put("/:coasterId", AuthMiddleware, (req, res) => {
   const {
     coasterName,
     description,
@@ -143,7 +144,7 @@ router.put("/:coasterId", (req, res) => {
     });
 });
 
-router.delete("/:projectId", (req, res) => {
+router.delete("/:projectId", AuthMiddleware, (req, res) => {
   CoasterSchema.findByIdAndRemove(req.params.projectId)
     .then(() => {
       res.send({ message: "Projeto removido com sucesso!" });
