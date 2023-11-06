@@ -2,6 +2,7 @@ import { Router } from "express";
 import CoasterSchema from "@/app/schemas/Coaster";
 import Slugify from "@/utils/Slugify";
 import AuthMiddleware from "@/app/middlewares/Auth";
+import Multer from "@/app/middlewares/Multer";
 
 const router = new Router();
 
@@ -13,6 +14,7 @@ router.get("/", (req, res) => {
         return {
           coasterName: coaster.coasterName,
           coasterType: coaster.coasterType,
+          slug: coaster.slug,
         };
       });
 
@@ -144,17 +146,50 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
     });
 });
 
-router.delete("/:projectId", AuthMiddleware, (req, res) => {
-  CoasterSchema.findByIdAndRemove(req.params.projectId)
+router.delete("/:coasterID", AuthMiddleware, (req, res) => {
+  CoasterSchema.findByIdAndRemove(req.params.coasterId)
     .then(() => {
       res.send({ message: "Projeto removido com sucesso!" });
     })
     .catch((error) => {
-      console.error("ERRO - A tentativa de exclusão foi malsucedida.");
+      console.error("ERRO - A tentativa de exclusão foi malsucedida.", error);
       res.status(400).send({
         error: "Não foi possível excluir o Id solicitado.",
       });
     });
 });
+
+router.post(
+  "/main-image/:coasterId",
+  [AuthMiddleware, Multer.single("mainImage")],
+  (req, res) => {
+    const { file } = req;
+    if (file) {
+      CoasterSchema.findByIdAndUpdate(
+        req.params.coasterId,
+        {
+          $set: {
+            mainImage: file.path,
+          },
+        },
+        { new: true }
+      )
+        .then((coaster) => {
+          return res.send({ coaster });
+        })
+        .catch((error) => {
+          console.error(
+            "ERRO - Não foi possível associar imagem ao projeto.",
+            error
+          );
+          res.status(500).send({ error: "Ocorreu um erro, tente novamente." });
+        });
+    } else {
+      res.status(400).send({ error: "Nenhuma imagem enviada" });
+    }
+  }
+);
+
+router.post("/other-images", Multer.array("images"), (req, res) => {});
 
 export default router;
