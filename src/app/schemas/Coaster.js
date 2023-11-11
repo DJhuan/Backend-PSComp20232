@@ -21,7 +21,7 @@ const CoasterSchema = new mongoose.Schema({
   },
   mainImage: {
     type: String,
-    required: true,
+    required: false,
   },
   images: [
     {

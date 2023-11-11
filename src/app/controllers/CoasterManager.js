@@ -3,6 +3,7 @@ import CoasterSchema from "@/app/schemas/Coaster";
 import Slugify from "@/utils/Slugify";
 import AuthMiddleware from "@/app/middlewares/Auth";
 import Multer from "@/app/middlewares/Multer";
+import FileRemover from "@/utils/FileRemover";
 
 const router = new Router();
 
@@ -15,6 +16,7 @@ router.get("/", (req, res) => {
           coasterName: coaster.coasterName,
           coasterType: coaster.coasterType,
           slug: coaster.slug,
+          mainImage: coaster.mainImage,
         };
       });
 
@@ -107,6 +109,8 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
+    mainImage,
+    images,
   } = req.body;
 
   let slug = undefined;
@@ -146,9 +150,10 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
     });
 });
 
-router.delete("/:coasterID", AuthMiddleware, (req, res) => {
+router.delete("/:coasterId", AuthMiddleware, (req, res) => {
   CoasterSchema.findByIdAndRemove(req.params.coasterId)
-    .then(() => {
+    .then((obj) => {
+      FileRemover(obj.toJSON());
       res.send({ message: "Projeto removido com sucesso!" });
     })
     .catch((error) => {
@@ -190,6 +195,39 @@ router.post(
   }
 );
 
-router.post("/other-images", Multer.array("images"), (req, res) => {});
+router.post(
+  "/images/:coasterId",
+  [AuthMiddleware, Multer.array("images")],
+  (req, res) => {
+    const { files } = req;
+
+    if (files && files.length > 0) {
+      const images = [];
+      files.forEach((file) => {
+        images.push(file.path);
+      });
+
+      CoasterSchema.findByIdAndUpdate(
+        req.params.coasterId,
+        {
+          $set: { images },
+        },
+        { new: true }
+      )
+        .then((coaster) => {
+          return res.send({ coaster });
+        })
+        .catch((error) => {
+          console.error(
+            "ERRO - Não foi possível associar as imagens ao projeto.",
+            error
+          );
+          res.status(500).send({ error: "Ocorreu um erro, tente novamente." });
+        });
+    } else {
+      res.status(400).send({ error: "Nenhuma imagem enviada!" });
+    }
+  }
+);
 
 export default router;
