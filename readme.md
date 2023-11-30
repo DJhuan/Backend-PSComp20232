@@ -7,4 +7,16 @@ O projeto usa o interpretador de JavaScript NODE.JS e o Framework Express.
 
 Certifique-se de ter o [Node.js](https://nodejs.org/) instalado antes de prosseguir.
 Para instalar as dependências:
-```bash npm i
+```bash
+npm i
+```
+
+## Iniciando o Servidor
+```bash
+npm run serve
+```
+## Informações inportantes:
+Há um arquivo com todos os modelos de request do Insomnia para testes
+
+## Créditos
+Jhuan Carlos Sabaini Dassie - 30.11.2023
