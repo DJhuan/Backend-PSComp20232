@@ -51,7 +51,7 @@ router.get("/:coasterSlug", (req, res) => {
       res.send(coaster);
     })
     .catch((error) => {
-      console.error("ERRO - O acesso aos dados foi mal sucedido.", error);
+      console.error("ERRO - O acesso aos dados foi malsucedido.", error);
       // 400 - Significa BAD REQUEST
       res.status(400).send({
         error: "Impossível acessar pelo Slug escolhido. Tente outro.",
@@ -70,6 +70,7 @@ router.post("/", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
+    link,
   } = req.body;
 
   CoasterSchema.create({
@@ -82,6 +83,7 @@ router.post("/", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
+    link,
   })
     .then((coaster) => {
       res.status(200).send(coaster);
@@ -109,8 +111,7 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
-    mainImage,
-    images,
+    link,
   } = req.body;
 
   let slug = undefined;
@@ -130,6 +131,7 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
       nausea,
       maxSpeed,
       length,
+      link,
     },
     {
       new: true,

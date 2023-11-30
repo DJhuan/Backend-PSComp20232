@@ -48,6 +48,10 @@ const CoasterSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  link: {
+    type: String,
+    required: true,
+  },
 });
 
 CoasterSchema.pre("save", function (next) {
