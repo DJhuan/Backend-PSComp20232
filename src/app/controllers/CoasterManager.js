@@ -2,6 +2,8 @@ import { Router } from "express";
 import CoasterSchema from "@/app/schemas/Coaster";
 import Slugify from "@/utils/Slugify";
 import AuthMiddleware from "@/app/middlewares/Auth";
+import Multer from "@/app/middlewares/Multer";
+import FileRemover from "@/utils/FileRemover";
 
 const router = new Router();
 
@@ -13,6 +15,8 @@ router.get("/", (req, res) => {
         return {
           coasterName: coaster.coasterName,
           coasterType: coaster.coasterType,
+          slug: coaster.slug,
+          mainImage: coaster.mainImage,
         };
       });
 
@@ -47,7 +51,7 @@ router.get("/:coasterSlug", (req, res) => {
       res.send(coaster);
     })
     .catch((error) => {
-      console.error("ERRO - O acesso aos dados foi mal sucedido.", error);
+      console.error("ERRO - O acesso aos dados foi malsucedido.", error);
       // 400 - Significa BAD REQUEST
       res.status(400).send({
         error: "Impossível acessar pelo Slug escolhido. Tente outro.",
@@ -66,6 +70,7 @@ router.post("/", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
+    link,
   } = req.body;
 
   CoasterSchema.create({
@@ -78,6 +83,7 @@ router.post("/", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
+    link,
   })
     .then((coaster) => {
       res.status(200).send(coaster);
@@ -105,6 +111,7 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
     nausea,
     maxSpeed,
     length,
+    link,
   } = req.body;
 
   let slug = undefined;
@@ -124,6 +131,7 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
       nausea,
       maxSpeed,
       length,
+      link,
     },
     {
       new: true,
@@ -144,17 +152,84 @@ router.put("/:coasterId", AuthMiddleware, (req, res) => {
     });
 });
 
-router.delete("/:projectId", AuthMiddleware, (req, res) => {
-  CoasterSchema.findByIdAndRemove(req.params.projectId)
-    .then(() => {
+router.delete("/:coasterId", AuthMiddleware, (req, res) => {
+  CoasterSchema.findByIdAndRemove(req.params.coasterId)
+    .then((obj) => {
+      FileRemover(obj.toJSON());
       res.send({ message: "Projeto removido com sucesso!" });
     })
     .catch((error) => {
-      console.error("ERRO - A tentativa de exclusão foi malsucedida.");
+      console.error("ERRO - A tentativa de exclusão foi malsucedida.", error);
       res.status(400).send({
         error: "Não foi possível excluir o Id solicitado.",
       });
     });
 });
+
+router.post(
+  "/main-image/:coasterId",
+  [AuthMiddleware, Multer.single("mainImage")],
+  (req, res) => {
+    const { file } = req;
+    if (file) {
+      CoasterSchema.findByIdAndUpdate(
+        req.params.coasterId,
+        {
+          $set: {
+            mainImage: file.path,
+          },
+        },
+        { new: true }
+      )
+        .then((coaster) => {
+          return res.send({ coaster });
+        })
+        .catch((error) => {
+          console.error(
+            "ERRO - Não foi possível associar imagem ao projeto.",
+            error
+          );
+          res.status(500).send({ error: "Ocorreu um erro, tente novamente." });
+        });
+    } else {
+      res.status(400).send({ error: "Nenhuma imagem enviada" });
+    }
+  }
+);
+
+router.post(
+  "/images/:coasterId",
+  [AuthMiddleware, Multer.array("images")],
+  (req, res) => {
+    const { files } = req;
+
+    if (files && files.length > 0) {
+      const images = [];
+      files.forEach((file) => {
+        images.push(file.path);
+      });
+
+      CoasterSchema.findByIdAndUpdate(
+        req.params.coasterId,
+        {
+          $set: { images },
+        },
+        { new: true }
+      )
+        .then((coaster) => {
+          return res.send({ coaster });
+        })
+        .catch((error) => {
+          console.error(
+            "ERRO - Não foi possível associar as imagens ao projeto.",
+            error
+          );
+          res.status(500).send({ error: "Ocorreu um erro, tente novamente." });
+        });
+    } else {
+      res.status(400).send({ error: "Nenhuma imagem enviada!" });
+    }
+  }
+);
 
 export default router;

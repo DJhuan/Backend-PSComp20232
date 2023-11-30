@@ -1,5 +1,5 @@
-import mongoose from '@/database';
-import Slugify from '@/utils/Slugify';
+import mongoose from "@/database";
+import Slugify from "@/utils/Slugify";
 
 const CoasterSchema = new mongoose.Schema({
   coasterName: {
@@ -19,12 +19,15 @@ const CoasterSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // images: [
-  //   {
-  //     type: String,
-  //     required: true,
-  //   },
-  // ],
+  mainImage: {
+    type: String,
+    required: false,
+  },
+  images: [
+    {
+      type: String,
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
@@ -45,12 +48,16 @@ const CoasterSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  link: {
+    type: String,
+    required: true,
+  },
 });
 
-CoasterSchema.pre('save', function (next) {
+CoasterSchema.pre("save", function (next) {
   const coName = this.coasterName;
   this.slug = Slugify(coName);
   next();
 });
 
-export default mongoose.model('Coaster', CoasterSchema);
+export default mongoose.model("Coaster", CoasterSchema);

@@ -8,8 +8,8 @@ const port = 8080;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use("/coasterManager", CoasterManager);
 app.use("/auth", Auth);
+app.use("/coasterManager", CoasterManager);
 
 console.log(`Servidor ativo em: http://localhost:${port}`);
 
